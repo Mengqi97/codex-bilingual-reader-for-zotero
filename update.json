@@ -3,9 +3,9 @@
     "codex-bilingual-reader@geyi.net": {
       "updates": [
         {
-          "version": "1.4.0",
-          "update_link": "https://github.com/Mengqi97/codex-bilingual-reader-for-zotero/releases/download/v1.4.0/codex-bilingual-reader.xpi",
-          "update_hash": "sha256:875692D1D3D26944791E5921867098FCC6E122E9AFB1FFB4215EA882FB20AF29",
+          "version": "1.4.5",
+          "update_link": "https://github.com/Mengqi97/codex-bilingual-reader-for-zotero/releases/download/v1.4.5/codex-bilingual-reader.xpi",
+          "update_hash": "sha256:70D84F193240A5BE440A453EF0DD08D8602C453B12B901994FAB4132FF3EDAA2",
           "applications": {
             "zotero": {
               "strict_min_version": "6.999",

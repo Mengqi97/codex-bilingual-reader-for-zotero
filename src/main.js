@@ -934,16 +934,13 @@
       .sort((left, right) => right.id - left.id)[0] || null;
   }
 
-  async function bilingualPdfPreviewDataURL(attachment, doc) {
+  async function bilingualPdfPreviewDataURL(attachment, doc, sourceReader = null) {
     const path = attachment.getFilePath?.() || "";
     if (!path || !(await IOUtils.exists(path))) throw new Error("双语 PDF 文件尚未下载到本机。");
     const info = await IOUtils.stat(path);
     const cached = pdfPreviewCache.get(attachment.id);
     if (cached?.mtime === info.lastModified && cached?.size === info.size) return cached.dataURL;
-    const existingTabs = new Set(
-      Zotero.Reader._readers.filter((entry) => entry.itemID === attachment.id).map((entry) => entry.tabID),
-    );
-    const reader = await Zotero.Reader.open(
+    const reader = sourceReader || await Zotero.Reader.open(
       attachment.id,
       { pageIndex: 0 },
       { openInBackground: true, allowDuplicate: true },
@@ -966,7 +963,7 @@
       pdfPreviewCache.set(attachment.id, { mtime: info.lastModified, size: info.size, dataURL });
       return dataURL;
     } finally {
-      if (reader?.tabID && !existingTabs.has(reader.tabID)) Zotero.getMainWindow().Zotero_Tabs.close(reader.tabID);
+      if (!sourceReader && reader?.tabID) reader.close();
     }
   }
 
@@ -1032,6 +1029,33 @@
     await Zotero.FullText.indexItems([target.id], { ignoreErrors: true });
     setPref("dualInnerTrimPoints", String(trim));
     return { attachmentID: target.id, path: targetPath, trimPoints: trim };
+  }
+
+  async function refreshBilingualPdfReader(item) {
+    const target = findBilingualPdf(item);
+    if (!target) throw new Error("当前条目没有可重新打开的保真中英对照 PDF。");
+    const readers = Zotero.Reader._readers.filter((entry) => entry.itemID === target.id);
+    for (const reader of readers) {
+      reader.close();
+    }
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      if (readers.every((entry) => !Zotero.Reader._readers.includes(entry))) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    if (readers.some((entry) => Zotero.Reader._readers.includes(entry))) {
+      throw new Error("旧的双语 PDF 阅读器未能在 5 秒内关闭，请稍后重试。");
+    }
+    pdfPreviewCache.delete(target.id);
+    const reopened = await Zotero.Reader.open(
+      target.id,
+      { pageIndex: 0 },
+      { allowDuplicate: true },
+    );
+    const ownerTabs = reopened?._window?.Zotero_Tabs;
+    const reopenedTab = reopened?.tabID ? ownerTabs?._getTab(reopened.tabID)?.tab : null;
+    if (!reopenedTab) throw new Error("Zotero 未能创建新的双语 PDF 阅读器标签。");
+    ownerTabs.select(reopened.tabID);
+    return { attachment: target, reader: reopened };
   }
 
   async function importPreservedPdfWithRecovery(attachment, pdfPath) {
@@ -1433,17 +1457,35 @@
   function registerPreferredBilingualOpen(win) {
     const tree = win.document.getElementById("zotero-items-tree");
     if (!tree || tree._codexBilingualOpenHandler) return;
-    const handler = (event) => {
+    const handler = async (event) => {
       if (event.button !== 0 || !event.target?.closest?.('[role="treeitem"]')) return;
       if (String(getPref("preferredOpenAttachment", "bilingual")) === "original") return;
-      const [selected] = win.ZoteroPane.getSelectedItems();
-      if (!selected?.isRegularItem?.()) return;
-      const bilingualPdf = findBilingualPdf(selected);
+      const row = event.target.closest('[id^="zotero-items-tree-row-"]');
+      const rowIndex = row ? Number(row.id.replace("zotero-items-tree-row-", "")) : Number.NaN;
+      const clickedItem = Number.isInteger(rowIndex)
+        ? win.ZoteroPane.itemsView?.getRow(rowIndex)?.ref
+        : null;
+      const item = clickedItem || win.ZoteroPane.getSelectedItems()[0];
+      if (!item?.isRegularItem?.()) return;
+      const bilingualPdf = findBilingualPdf(item);
       if (!bilingualPdf) return;
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
-      void Zotero.Reader.open(bilingualPdf.id).catch((error) => Zotero.logError(error));
+      try {
+        await win.ZoteroPane.viewAttachment(bilingualPdf.id, event);
+      } catch (bilingualError) {
+        Zotero.logError(bilingualError);
+        const originalPdf = findAttachment(item);
+        try {
+          if (!originalPdf) throw bilingualError;
+          await win.ZoteroPane.viewAttachment(originalPdf.id, event);
+          notify("Codex Bilingual Reader", "双语 PDF 暂时无法打开，已改为打开原始 PDF。");
+        } catch (originalError) {
+          Zotero.logError(originalError);
+          notify("Codex Bilingual Reader", `PDF 打开失败：${originalError.message || String(originalError)}`);
+        }
+      }
     };
     tree._codexBilingualOpenHandler = handler;
     tree.addEventListener("dblclick", handler, true);
@@ -1743,6 +1785,11 @@
     widthButton.textContent = "应用页面宽度";
     widthButton.disabled = !bilingualPdf;
     widthButton.style.marginInlineStart = "8px";
+    const reopenButton = doc.createElement("button");
+    reopenButton.type = "button";
+    reopenButton.textContent = "刷新并重新打开";
+    reopenButton.disabled = !bilingualPdf;
+    reopenButton.style.marginInlineStart = "8px";
     const widthStatus = doc.createElement("div");
     widthStatus.style.cssText = "margin-top:6px;color:var(--fill-secondary,#666);line-height:1.4;";
 
@@ -1763,7 +1810,7 @@
     openPreview.addEventListener("click", () => {
       if (bilingualPdf) void Zotero.Reader.open(bilingualPdf.id).catch((error) => Zotero.logError(error));
     });
-    const refreshPreview = async () => {
+    const refreshPreview = async (sourceReader = null) => {
       const previewPath = bilingualPdf?.getFilePath?.() || "";
       if (!previewPath) {
         previewStatus.textContent = "尚未检测到本地双语 PDF。生成并导入后会在这里显示预览。";
@@ -1775,7 +1822,7 @@
       previewImage.style.display = "none";
       openPreview.style.display = "inline-block";
       try {
-        const dataURL = await bilingualPdfPreviewDataURL(bilingualPdf, doc);
+        const dataURL = await bilingualPdfPreviewDataURL(bilingualPdf, doc, sourceReader);
         if (!body.isConnected) return;
         previewImage.src = dataURL;
         previewImage.style.display = "block";
@@ -1785,24 +1832,44 @@
         Zotero.logError(error);
       }
     };
+    reopenButton.addEventListener("click", async () => {
+      reopenButton.disabled = true;
+      widthStatus.textContent = "正在关闭旧预览并重新打开双语 PDF…";
+      widthStatus.style.color = "var(--fill-secondary,#666)";
+      try {
+        const { reader } = await refreshBilingualPdfReader(item);
+        widthStatus.textContent = "双语 PDF 已刷新并重新打开。";
+        widthStatus.style.color = "var(--color-green-50,#238636)";
+        await refreshPreview(reader);
+      } catch (error) {
+        widthStatus.textContent = `重新打开失败：${error.message || String(error)}`;
+        widthStatus.style.color = "var(--color-red-60,#c01c28)";
+      } finally {
+        reopenButton.disabled = !bilingualPdf;
+      }
+    });
     widthButton.addEventListener("click", async () => {
       widthButton.disabled = true;
+      reopenButton.disabled = true;
       widthStatus.textContent = "正在重新拼接 PDF，不会调用翻译模型…";
       try {
         const result = await adjustBilingualPdfWidth(item, widthInput.value);
         widthInput.value = String(result.trimPoints);
-        widthStatus.textContent = `已应用 ${result.trimPoints} pt/侧，并重新索引附件。`;
+        widthStatus.textContent = `已应用 ${result.trimPoints} pt/侧，正在刷新阅读器…`;
         widthStatus.style.color = "var(--color-green-50,#238636)";
-        await refreshPreview();
+        const { reader } = await refreshBilingualPdfReader(item);
+        widthStatus.textContent = `已应用 ${result.trimPoints} pt/侧，双语 PDF 已重新打开。`;
+        await refreshPreview(reader);
       } catch (error) {
         widthStatus.textContent = `调整失败：${error.message || String(error)}`;
         widthStatus.style.color = "var(--color-red-60,#c01c28)";
       } finally {
         widthButton.disabled = !bilingualPdf;
+        reopenButton.disabled = !bilingualPdf;
       }
     });
     const widthControls = doc.createElement("div");
-    widthControls.append(widthInput, widthUnit, widthButton);
+    widthControls.append(widthInput, widthUnit, widthButton, reopenButton);
     widthPanel.append(widthLabel, widthHelp, widthControls, widthStatus);
     previewPanel.append(previewLabel, previewStatus, openPreview, previewImage);
     body.append(summary, button, settings, tasks, status, widthPanel, previewPanel);
@@ -1902,6 +1969,7 @@
     installPreservedPdfRuntime,
     selectPreservedPdfWorkspace,
     adjustBilingualPdfWidth,
+    refreshBilingualPdfReader,
     startPreservedPdfTranslation,
     translatePreservedPdfItems,
     listTasks,

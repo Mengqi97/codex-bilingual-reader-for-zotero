@@ -1,6 +1,6 @@
 {
   "name": "codex-bilingual-reader-for-zotero",
-  "version": "1.4.0",
+  "version": "1.4.5",
   "private": true,
   "description": "Create preserved-layout English-Chinese PDFs in Zotero with Codex CLI or OpenAI-compatible APIs.",
   "license": "MIT",
