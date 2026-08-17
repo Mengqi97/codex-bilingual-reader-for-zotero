@@ -1,0 +1,68 @@
+# Build and release artifacts
+build/
+dist/
+*.xpi
+*.zip
+
+# External engines and local runtimes
+.tools/
+.runtime/
+node_modules/
+.venv/
+venv/
+
+# Generated translations, private papers, and scratch work
+output/
+tmp/
+temp/
+storage/
+Zotero/
+Profiles/
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.jsonl
+
+# Task state and local translation caches
+codex-bilingual-reader-tasks.json
+codex-bilingual-reader.json
+codex-fragment-*.jsonl
+codex-runner-result.json
+codex-fatal-error.json
+codex-batch-broker-ready.json
+
+# Credentials and machine-local configuration
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+auth.json
+auth-*.json
+*.pem
+*.key
+*.p12
+*.pfx
+config.local.*
+*.local.toml
+.codex/
+.agents/
+
+# Python, Node, and test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+.coverage
+*.log
+tests/fixtures/*.aux
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

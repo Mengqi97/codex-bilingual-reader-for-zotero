@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        title="Codex 翻译任务" orient="vertical">
+  <script src="chrome://codex-bilingual/content/task-center.js" />
+  <vbox flex="1" style="padding:14px; min-width:900px; height:100vh; box-sizing:border-box; overflow:hidden;">
+    <description style="font-size:16px;font-weight:600;margin-bottom:8px;">Codex 翻译任务</description>
+    <description id="task-center-summary" style="margin-bottom:10px;color:var(--fill-secondary,#666);">正在加载任务记录…</description>
+    <description id="task-center-selection" style="margin-bottom:6px;color:var(--fill-secondary,#666);">尚未选择任务。可勾选多行或使用表头全选。</description>
+    <description id="task-center-feedback" role="status" aria-live="polite" style="min-height:18px;margin-bottom:8px;color:var(--color-accent-blue,#0060df);" />
+    <html:div id="task-center-scroll" style="overflow:auto; min-height:0; height:0; flex:1 1 auto; border:1px solid var(--border-color,#d0d7de);">
+      <html:table id="task-center-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+        <html:thead><html:tr>
+          <html:th><html:input id="task-center-select-all" type="checkbox" aria-label="全选任务" /></html:th>
+          <html:th>条目</html:th><html:th>目标语言</html:th><html:th>译文位置</html:th>
+          <html:th>翻译模型</html:th><html:th>任务 ID</html:th><html:th>任务状态</html:th>
+          <html:th>当前阶段</html:th><html:th>翻译进度</html:th><html:th>运行时间</html:th>
+          <html:th>Token</html:th><html:th>费用</html:th><html:th>错误信息</html:th><html:th>操作</html:th>
+        </html:tr></html:thead>
+        <html:tbody id="task-center-body" />
+      </html:table>
+    </html:div>
+    <hbox id="task-center-actions" style="margin-top:12px;gap:8px;flex:0 0 auto;">
+      <button id="task-center-refresh" label="刷新任务记录" />
+      <button id="task-center-cancel" label="取消选中任务" disabled="disabled" />
+      <button id="task-center-mark-stopped" label="标记选中已停止" disabled="disabled" />
+      <button id="task-center-copy" label="复制选中任务 ID" disabled="disabled" />
+      <spacer flex="1" />
+      <button id="task-center-open-result" label="查看翻译结果" disabled="disabled" />
+      <button id="task-center-close" label="关闭" />
+    </hbox>
+  </vbox>
+</window>

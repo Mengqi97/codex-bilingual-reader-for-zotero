@@ -1,0 +1,209 @@
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      xmlns:html="http://www.w3.org/1999/xhtml">
+  <description style="padding:12px 0;font-weight:600;">Codex 中英对照 · 翻译设置</description>
+  <groupbox>
+    <label><html:h2>阅读布局与计费</html:h2></label>
+    <description>默认仅生成并导入保真中英对照 PDF。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="译文位置" flex="1" />
+      <menulist id="codex-bilingual-translation-side" style="width:360px;">
+        <menupopup>
+          <menuitem value="right" label="译文在右侧（默认）" />
+          <menuitem value="left" label="译文在左侧" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="双击论文默认打开" flex="1" />
+      <menulist id="codex-bilingual-preferred-open-attachment" style="width:360px;">
+        <menupopup>
+          <menuitem value="bilingual" label="优先打开双语 PDF（默认）" />
+          <menuitem value="original" label="打开原始 PDF" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <description>Codex CLI/App Server 通常不返回精确 Token；任务中心会显示本地估算。OpenAI 兼容 API 返回 usage 时显示实际值。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="计价单位" flex="1" />
+      <menulist id="codex-bilingual-price-unit" style="width:150px;">
+        <menupopup>
+          <menuitem value="million" label="每百万 Token" />
+          <menuitem value="thousand" label="每千 Token" />
+        </menupopup>
+      </menulist>
+      <label value="币种" />
+      <menulist id="codex-bilingual-price-currency" style="width:120px;">
+        <menupopup>
+          <menuitem value="CNY" label="人民币（￥）" />
+          <menuitem value="USD" label="美元（$）" />
+        </menupopup>
+      </menulist>
+      <label value="输入单价" />
+      <html:input id="codex-bilingual-input-token-price" type="number" min="0" step="0.0001" style="width:110px;" />
+      <label value="输出单价" />
+      <html:input id="codex-bilingual-output-token-price" type="number" min="0" step="0.0001" style="width:110px;" />
+    </hbox>
+    <description>单价与费用均使用所选币种；切换币种不会自动换算已填写的单价，请按目标币种重新填写。</description>
+    <hbox align="center" style="gap:8px;">
+      <spacer flex="1" />
+      <button id="codex-bilingual-fetch-official-price" label="获取官方价格" />
+      <button id="codex-bilingual-open-official-price" label="打开价格来源" disabled="true" />
+      <description id="codex-bilingual-official-price-status" />
+    </hbox>
+  </groupbox>
+
+  <groupbox>
+    <label><html:h2>Codex 中英对照</html:h2></label>
+    <description>选择翻译后端。配置只保存在本机 Zotero 配置中。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="调用方式" flex="1" />
+      <menulist id="codex-bilingual-backend">
+        <menupopup>
+          <menuitem value="app-server" label="Codex App Server（推荐）" />
+          <menuitem value="cli" label="本地 Codex CLI（兼容模式）" />
+          <menuitem value="api" label="OpenAI 兼容 API" />
+        </menupopup>
+      </menulist>
+    </hbox>
+  </groupbox>
+
+  <groupbox id="codex-bilingual-cli-settings">
+    <label><html:h2>本地 Codex CLI</html:h2></label>
+    <description>留空时 Windows 默认使用 %APPDATA%\npm\codex.cmd。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="Codex 路径" flex="1" />
+      <html:input id="codex-bilingual-cli-path" type="text" style="width:360px;" placeholder="C:\Users\你的用户名\AppData\Roaming\npm\codex.cmd" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="Node 路径（可选）" flex="1" />
+      <html:input id="codex-bilingual-node-path" type="text" style="width:360px;" placeholder="自动寻找 node.exe；找不到时填写完整路径" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="Codex Home（可选）" flex="1" />
+      <html:input id="codex-bilingual-home-path" type="text" style="width:360px;" placeholder="默认使用 C:\Users\你的用户名\.codex（含登录态）" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="模型（可选）" flex="1" />
+      <html:input id="codex-bilingual-cli-model" type="text" style="width:360px;" placeholder="留空使用 Codex 默认模型，例如 gpt-5.1-codex" />
+    </hbox>
+  </groupbox>
+
+  <groupbox id="codex-bilingual-preserved-pdf-settings">
+    <label><html:h2>保真 PDF 引擎（默认输出）</html:h2></label>
+    <description>插件调用本机外部安装的 PDFMathTranslate-next 启动器，避免将 AGPL 引擎打包进本插件。翻译后端跟随上方“调用方式”：可使用本机 Codex CLI，或 OpenAI、DeepSeek 等兼容 API。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="启动器路径" flex="1" />
+      <html:input id="codex-bilingual-preserved-pdf-launcher" type="text" style="width:360px;" placeholder="…\scripts\translate-preserved-pdf-cli.mjs" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="PDFMathTranslate 引擎路径（可选）" flex="1" />
+      <html:input id="codex-bilingual-preserved-pdf-engine" type="text" style="width:360px;" placeholder="…\pdf2zh-next\Scripts\pdf2zh_next.exe" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <spacer flex="1" />
+      <button id="codex-bilingual-select-pdf-workspace" label="选择工作目录并自动配置…" />
+      <description id="codex-bilingual-pdf-workspace-status" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="PDF 翻译推理程度" flex="1" />
+      <menulist id="codex-bilingual-preserved-pdf-reasoning" style="width:360px;">
+        <menupopup>
+          <menuitem value="low" label="low（推荐，全文翻译更快）" />
+          <menuitem value="medium" label="medium" />
+          <menuitem value="high" label="high" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <description id="codex-bilingual-preserved-pdf-model-source">正在读取保真 PDF 的 Provider 和模型…</description>
+    <separator class="thin" />
+    <label value="双语 PDF 页面宽度（独立后处理）" />
+    <description>默认裁去左右页面各自的内侧空白，不改变翻译内容。该数值也可在右侧栏对已经生成的双语 PDF 单独重新应用，无需重新翻译。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="每侧裁去空白（pt）" flex="1" />
+      <html:input id="codex-bilingual-dual-inner-trim-points" type="number" min="0" max="120" step="5" style="width:110px;" />
+      <description>0 = 原始宽度；80 = 推荐默认值</description>
+    </hbox>
+    <description>可检索的双语 PDF 会作为子附件导入。若当前预览器出现字体方框，请改用支持 Unicode 字体嵌入的 PDF 阅读器；原文和生成文件都保持独立。</description>
+  </groupbox>
+
+  <groupbox id="codex-bilingual-app-server-settings">
+    <label><html:h2>Codex App Server（非保真 HTML 流程）</html:h2></label>
+    <description>这里的模型目录用于非保真 HTML 流程；保真 PDF 在选择 App Server 时仍使用本机 Codex CLI。若要让保真 PDF 使用远程服务，请选择“OpenAI 兼容 API”。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="可用模型" flex="1" />
+      <menulist id="codex-bilingual-app-server-model" style="width:360px;">
+        <menupopup id="codex-bilingual-app-server-model-options" />
+      </menulist>
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="推理程度" flex="1" />
+      <menulist id="codex-bilingual-app-server-reasoning" style="width:360px;">
+        <menupopup id="codex-bilingual-app-server-reasoning-options" />
+      </menulist>
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <spacer flex="1" />
+      <button id="codex-bilingual-fetch-app-server-models" label="加载 Codex 模型" />
+      <description id="codex-bilingual-app-server-status" />
+    </hbox>
+  </groupbox>
+
+  <groupbox id="codex-bilingual-api-settings">
+    <label><html:h2>OpenAI 兼容 API</html:h2></label>
+    <description>选择服务预设后自动填入接口格式和 Base URL；密钥仅保存在本机 Zotero 配置中。</description>
+    <hbox align="center" style="gap:8px;">
+      <label value="服务商" flex="1" />
+      <menulist id="codex-bilingual-api-provider">
+        <menupopup>
+          <menuitem value="openai" label="OpenAI" />
+          <menuitem value="openrouter" label="OpenRouter" />
+          <menuitem value="deepseek" label="DeepSeek" />
+          <menuitem value="qwen" label="通义千问（兼容模式）" />
+          <menuitem value="ollama" label="Ollama（本地）" />
+          <menuitem value="lmstudio" label="LM Studio（本地）" />
+          <menuitem value="custom" label="自定义 OpenAI 兼容服务" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="接口格式" flex="1" />
+      <menulist id="codex-bilingual-api-format" disabled="true">
+        <menupopup>
+          <menuitem value="chat-completions" label="OpenAI Chat Completions（/v1/chat/completions）" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="Base URL" flex="1" />
+      <html:input id="codex-bilingual-api-base-url" type="url" style="width:360px;" placeholder="https://api.openai.com/v1" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="模型预设" flex="1" />
+      <menulist id="codex-bilingual-api-model-preset">
+        <menupopup id="codex-bilingual-api-model-options" />
+      </menulist>
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="模型名称" flex="1" />
+      <html:input id="codex-bilingual-api-model" type="text" style="width:360px;" placeholder="例如 gpt-5.1" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="API Key" flex="1" />
+      <html:input id="codex-bilingual-api-key" type="password" style="width:360px;" placeholder="仅保存在本机 Zotero 配置" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <spacer flex="1" />
+      <button id="codex-bilingual-fetch-models" label="获取可用模型" />
+      <description id="codex-bilingual-api-status" />
+    </hbox>
+  </groupbox>
+
+  <groupbox>
+    <label><html:h2>连接测试</html:h2></label>
+    <description>发送一条极短测试请求，验证当前选择的后端、路径或 API 配置是否可用。</description>
+    <hbox align="center" style="gap:8px;">
+      <button id="codex-bilingual-test-connection" label="测试连接" />
+      <description id="codex-bilingual-test-status" />
+    </hbox>
+  </groupbox>
+</vbox>

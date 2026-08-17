@@ -1,0 +1,19 @@
+{
+  "addons": {
+    "codex-bilingual-reader@geyi.net": {
+      "updates": [
+        {
+          "version": "1.3.71",
+          "update_link": "https://github.com/Mengqi97/codex-bilingual-reader-for-zotero/releases/download/v1.3.71/codex-bilingual-reader.xpi",
+          "update_hash": "sha256:B62F238C96C6A4FB69E9158E7552A7EFF11763D63E01189F2D069D6C0B122AC6",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "6.999",
+              "strict_max_version": "9.*"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
