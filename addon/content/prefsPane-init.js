@@ -11,6 +11,7 @@
       ["codex-bilingual-backend", "backend"],
       ["codex-bilingual-preserved-pdf-launcher", "preservedPdfLauncherPath"],
       ["codex-bilingual-preserved-pdf-engine", "preservedPdfEnginePath"],
+      ["codex-bilingual-preserved-pdf-python", "preservedPdfPythonPath"],
       ["codex-bilingual-preserved-pdf-reasoning", "preservedPdfReasoning"],
       ["codex-bilingual-cli-path", "cliPath"],
       ["codex-bilingual-node-path", "cliNodePath"],
@@ -182,14 +183,19 @@
       const button = document.getElementById("codex-bilingual-install-runtime");
       const status = document.getElementById("codex-bilingual-runtime-install-status");
       button.disabled = true;
-      status.textContent = "正在下载并安装官方 PDF 引擎（约 600 MB），请保持 Zotero 运行…";
+      const support = Zotero.CodexBilingual.platformSupport();
+      status.textContent = support.platform === "macos"
+        ? "正在检测 macOS 的 Node、Python、Codex 和 pdf2zh_next…"
+        : "正在下载并安装官方 PDF 引擎（约 600 MB），请保持 Zotero 运行…";
       status.style.color = "var(--fill-secondary, #666)";
       try {
         const result = await Zotero.CodexBilingual.installPreservedPdfRuntime();
         document.getElementById("codex-bilingual-preserved-pdf-launcher").value = result.launcher;
         document.getElementById("codex-bilingual-preserved-pdf-engine").value = result.engine;
         document.getElementById("codex-bilingual-node-path").value = result.node;
-        status.textContent = "安装完成，路径已填写并通过本地预检。";
+        if (result.python) document.getElementById("codex-bilingual-preserved-pdf-python").value = result.python;
+        if (result.codex) document.getElementById("codex-bilingual-cli-path").value = result.codex;
+        status.textContent = result.platform === "macos" ? "macOS 依赖已自动识别并通过本地预检。" : "安装完成，路径已填写并通过本地预检。";
         status.style.color = "var(--color-green-50, #238636)";
       } catch (error) {
         status.textContent = `安装失败：${error.message || String(error)}`;
@@ -212,6 +218,7 @@
         }
         document.getElementById("codex-bilingual-preserved-pdf-launcher").value = result.launcher;
         document.getElementById("codex-bilingual-preserved-pdf-engine").value = result.engine;
+        if (result.python) document.getElementById("codex-bilingual-preserved-pdf-python").value = result.python;
         status.textContent = "已自动配置并完成保真 PDF 预检。";
         status.style.color = "var(--color-green-50, #238636)";
       } catch (error) {
@@ -316,6 +323,11 @@
       }
     });
     updateVisibility();
+    const support = Zotero.CodexBilingual.platformSupport();
+    if (support.platform === "macos") {
+      document.getElementById("codex-bilingual-install-runtime").label = "自动检测/配置 macOS PDF 环境";
+      document.getElementById("codex-bilingual-runtime-install-status").textContent = "先按官方推荐用 uv 安装 pdf2zh-next，然后点击自动检测。";
+    }
     void refreshPreservedPdfModelSource();
     if (officialPriceSource) officialPriceStatus("已保存上次使用的官方价格来源。");
   }

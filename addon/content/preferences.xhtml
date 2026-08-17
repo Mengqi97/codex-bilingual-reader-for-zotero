@@ -69,18 +69,18 @@
 
   <groupbox id="codex-bilingual-cli-settings">
     <label><html:h2>本地 Codex CLI</html:h2></label>
-    <description>留空时 Windows 默认使用 %APPDATA%\npm\codex.cmd。</description>
+    <description>留空时自动检测：Windows 使用 %APPDATA%\npm\codex.cmd；macOS 检查 Homebrew、/usr/local/bin 和 ~/.local/bin。</description>
     <hbox align="center" style="gap:8px;">
       <label value="Codex 路径" flex="1" />
-      <html:input id="codex-bilingual-cli-path" type="text" style="width:360px;" placeholder="C:\Users\你的用户名\AppData\Roaming\npm\codex.cmd" />
+      <html:input id="codex-bilingual-cli-path" type="text" style="width:360px;" placeholder="Windows: …\codex.cmd；macOS: /opt/homebrew/bin/codex" />
     </hbox>
     <hbox align="center" style="gap:8px;">
       <label value="Node 路径（可选）" flex="1" />
-      <html:input id="codex-bilingual-node-path" type="text" style="width:360px;" placeholder="自动寻找 node.exe；找不到时填写完整路径" />
+      <html:input id="codex-bilingual-node-path" type="text" style="width:360px;" placeholder="自动寻找 node/node.exe；找不到时填写完整路径" />
     </hbox>
     <hbox align="center" style="gap:8px;">
       <label value="Codex Home（可选）" flex="1" />
-      <html:input id="codex-bilingual-home-path" type="text" style="width:360px;" placeholder="默认使用 C:\Users\你的用户名\.codex（含登录态）" />
+      <html:input id="codex-bilingual-home-path" type="text" style="width:360px;" placeholder="默认使用用户目录下的 .codex（含登录态）" />
     </hbox>
     <hbox align="center" style="gap:8px;">
       <label value="模型（可选）" flex="1" />
@@ -93,15 +93,19 @@
     <description>插件调用本机外部安装的 PDFMathTranslate-next 启动器，避免将 AGPL 引擎打包进本插件。翻译后端跟随上方“调用方式”：可使用本机 Codex CLI，或 OpenAI、DeepSeek 等兼容 API。</description>
     <hbox align="center" style="gap:8px; flex-wrap:wrap;">
       <button id="codex-bilingual-install-runtime" label="一键安装/修复 PDF 翻译环境（约 600 MB）" />
-      <description id="codex-bilingual-runtime-install-status">首次安装需下载并解压官方引擎，通常需要几分钟。</description>
+      <description id="codex-bilingual-runtime-install-status">Windows 首次安装会下载官方引擎；macOS 会自动检测已由 uv 安装的官方引擎。</description>
     </hbox>
     <hbox align="center" style="gap:8px;">
       <label value="启动器路径" flex="1" />
-      <html:input id="codex-bilingual-preserved-pdf-launcher" type="text" style="width:360px;" placeholder="…\scripts\translate-preserved-pdf-cli.mjs" />
+      <html:input id="codex-bilingual-preserved-pdf-launcher" type="text" style="width:360px;" placeholder="…/scripts/translate-preserved-pdf-cli.mjs" />
     </hbox>
     <hbox align="center" style="gap:8px;">
       <label value="PDFMathTranslate 引擎路径（可选）" flex="1" />
-      <html:input id="codex-bilingual-preserved-pdf-engine" type="text" style="width:360px;" placeholder="…\pdf2zh-next\Scripts\pdf2zh_next.exe" />
+      <html:input id="codex-bilingual-preserved-pdf-engine" type="text" style="width:360px;" placeholder="Windows: …\pdf2zh.exe；macOS: ~/.local/bin/pdf2zh_next" />
+    </hbox>
+    <hbox align="center" style="gap:8px;">
+      <label value="PDF Python 路径（macOS 可选）" flex="1" />
+      <html:input id="codex-bilingual-preserved-pdf-python" type="text" style="width:360px;" placeholder="自动检测 ~/.local/share/uv/tools/pdf2zh-next/bin/python" />
     </hbox>
     <hbox align="center" style="gap:8px;">
       <spacer flex="1" />

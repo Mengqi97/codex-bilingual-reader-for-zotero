@@ -39,14 +39,23 @@ Codex Bilingual Reader 是一个适用于 Zotero 8/9 的 MIT 开源插件。它�
 
 1. 从[最新 GitHub Release](https://github.com/Mengqi97/codex-bilingual-reader-for-zotero/releases/latest)下载 `codex-bilingual-reader.xpi`。
 2. 在 Zotero 中打开**工具 → 附加组件**，选择**从文件安装附加组件…**，然后选择下载的 XPI。
-3. 打开**工具 → Codex 中英对照设置…**，点击**一键安装/修复 PDF 翻译环境**。首次运行会从官方 Release 下载并解压约 600 MB 的 PDFMathTranslate-next/BabelDOC 独立引擎，通常需要几分钟。
+3. 打开**工具 → Codex 中英对照设置…**。Windows 点击**一键安装/修复 PDF 翻译环境**；macOS 先按下方说明安装 `pdf2zh-next`，再点击**自动检测/配置 macOS PDF 环境**。
 4. 选择本地 Codex CLI 或 OpenAI 兼容 API，配置模型和凭据，并在翻译前点击**测试连接**。
 
 ### 保排版 PDF 配置
 
 一键安装完成后，插件会自动填写启动器、PDFMathTranslate 和 Node 路径并执行本地预检；普通用户无需克隆本仓库。已有开发环境或自定义安装位置的用户仍可使用**高级：选择已有工作目录…**或手动填写路径。
 
-一键安装目前支持 Windows，并对官方下载包执行 SHA-256 校验；若系统没有 Node.js，会一并安装官方便携版本。PDFMathTranslate-next/BabelDOC 使用 AGPL 许可证，因此它由用户主动下载并作为独立外部引擎运行，MIT 插件不会捆绑或链接其代码。关于调用协议、隐私边界、许可证边界和验收标准，请参阅[保排版 PDF 工作流](docs/PDF_PRESERVATION_WORKFLOW.md)。
+Windows 一键安装会对官方下载包执行 SHA-256 校验，并在缺少 Node.js 时安装官方便携版本。macOS 遵循 PDFMathTranslate-next 官方推荐的 uv 安装方式（Python 3.10-3.12）：
+
+```bash
+python3 -m pip install uv
+uv tool install --python 3.12 pdf2zh-next
+```
+
+同时需要可从 `/opt/homebrew/bin`、`/usr/local/bin`、`~/.local/bin` 或 Zotero 设置中指定的 `node`；使用本地 Codex 时还需要已登录的 `codex`。安装后重新打开 Zotero，点击**自动检测/配置 macOS PDF 环境**，插件会识别 `pdf2zh_next`、uv Python、Node 和 Codex 路径并执行预检。Intel 与 Apple Silicon 使用同一逻辑，但当前仓库没有 macOS 实机端到端验证，因此 macOS 支持暂标记为 beta。
+
+PDFMathTranslate-next/BabelDOC 使用 AGPL 许可证，因此它由用户主动安装并作为独立外部引擎运行，MIT 插件不会捆绑或链接其代码。关于调用协议、隐私边界、许可证边界和验收标准，请参阅[保排版 PDF 工作流](docs/PDF_PRESERVATION_WORKFLOW.md)。
 
 ### 使用入口与设置
 
@@ -70,7 +79,7 @@ Codex Bilingual Reader 是一个适用于 Zotero 8/9 的 MIT 开源插件。它�
 
 使用 Codex CLI 时，文本片段通过用户本地的 Codex 登录提交，插件不会读取或复制 Codex 凭据。使用 API 模式时，API Key 保存在本地 Zotero 首选项中，仅作为 Bearer 凭据发送到用户配置的 Base URL。无论使用哪种方式，论文文本都会发送给所选翻译服务商。
 
-在 Windows 上，启动器通过标准输入将文档片段传给配置的 `codex.cmd` 或 `codex.exe`，不会把 PDF 文本拼接到 Shell 命令中。
+启动器通过标准输入将文档片段传给配置的 Codex 可执行文件（Windows 为 `codex.cmd/codex.exe`，macOS 通常为 `codex`），不会把 PDF 文本拼接到 Shell 命令中。
 
 ### 已知限制
 
@@ -79,6 +88,7 @@ Codex Bilingual Reader 是一个适用于 Zotero 8/9 的 MIT 开源插件。它�
 - 只有 API 服务返回标准 `usage` 对象时才能显示精确 Token 用量；Codex CLI 当前不提供权威 Token 统计。
 - Zotero 全文缓存没有稳定的“段落到 PDF 坐标”映射，因此当前版本无法从双语内容精确跳转回 PDF 中的对应位置。
 - Codex App Server 依赖有效的 `~/.codex/config.toml`；若出现 TOML 解析错误，需要先修复提示的配置行。
+- macOS 适配目前为 beta：已覆盖路径检测、预检和进程启动，但发布前仍需在 Apple Silicon/Intel Mac 的 Zotero 中完成真实 PDF 端到端验收。
 
 ### 开发
 
@@ -129,14 +139,23 @@ English is preserved on the left and the translated, selectable Chinese page is 
 
 1. Download `codex-bilingual-reader.xpi` from the [latest GitHub Release](https://github.com/Mengqi97/codex-bilingual-reader-for-zotero/releases/latest).
 2. In Zotero, open **Tools → Add-ons**, choose **Install Add-on From File…**, and select the downloaded XPI.
-3. Open **Tools → Codex 中英对照设置…** and click **一键安装/修复 PDF 翻译环境**. On first use, the plugin downloads and extracts the separate PDFMathTranslate-next/BabelDOC engine (about 600 MB) from its official release; this normally takes a few minutes.
+3. Open **Tools → Codex 中英对照设置…**. On Windows, click **一键安装/修复 PDF 翻译环境**. On macOS, install `pdf2zh-next` as described below and then click **自动检测/配置 macOS PDF 环境**.
 4. Select the locally authenticated Codex CLI or an OpenAI-compatible API, configure the model and credentials, and run **Test connection** before translating a paper.
 
 ### Preserved-layout PDF setup
 
 After one-click setup, the plugin fills the launcher, PDFMathTranslate, and Node paths and runs a local preflight. Regular users no longer need to clone this repository. Existing development environments and custom installations can still use **高级：选择已有工作目录…** or enter paths manually.
 
-One-click setup currently supports Windows and verifies official downloads with SHA-256. If Node.js is unavailable, the official portable executable is installed as well. PDFMathTranslate-next/BabelDOC is downloaded on explicit user action and runs as a separate external AGPL engine; it is not bundled or linked into the MIT plugin. See [the preserved PDF workflow](docs/PDF_PRESERVATION_WORKFLOW.md) for provider contracts, privacy boundaries, license boundaries, and acceptance gates.
+Windows one-click setup verifies official downloads with SHA-256 and installs the official portable Node.js executable when necessary. On macOS, follow PDFMathTranslate-next's officially recommended uv installation path (Python 3.10-3.12):
+
+```bash
+python3 -m pip install uv
+uv tool install --python 3.12 pdf2zh-next
+```
+
+Node must also be available from `/opt/homebrew/bin`, `/usr/local/bin`, `~/.local/bin`, or a path entered in Zotero. Local Codex mode additionally requires a logged-in `codex` executable. Restart Zotero after installation and click **自动检测/配置 macOS PDF 环境**; the plugin detects `pdf2zh_next`, the uv Python environment, Node, and Codex and runs its preflight. Intel and Apple Silicon share this path, but the repository has not yet completed real-device end-to-end testing, so macOS support is currently beta.
+
+PDFMathTranslate-next/BabelDOC is explicitly installed by the user and runs as a separate external AGPL engine; it is not bundled or linked into the MIT plugin. See [the preserved PDF workflow](docs/PDF_PRESERVATION_WORKFLOW.md) for provider contracts, privacy boundaries, license boundaries, and acceptance gates.
 
 ### Entry points and settings
 
@@ -160,7 +179,7 @@ Translation time depends on PDF layout complexity, network latency, model availa
 
 With Codex CLI, source fragments are submitted through the user's local Codex login, and the plugin never reads or copies Codex credentials. With API mode, the API key remains in the local Zotero preference profile and is sent only as a Bearer credential to the configured Base URL. In either mode, document text is sent to the selected translation provider.
 
-On Windows, the launcher sends document fragments through stdin to the configured `codex.cmd` or `codex.exe`; it never interpolates PDF text into a shell command.
+The launcher sends document fragments through stdin to the configured Codex executable (`codex.cmd/codex.exe` on Windows and normally `codex` on macOS); it never interpolates PDF text into a shell command.
 
 ### Known limitations
 
@@ -169,6 +188,7 @@ On Windows, the launcher sends document fragments through stdin to the configure
 - Exact token usage is displayed only when an API provider returns a standard `usage` object. Codex CLI tasks do not currently expose authoritative token counts.
 - Zotero's full-text cache does not retain a robust paragraph-to-PDF coordinate map, so the current version cannot jump from bilingual content to the exact corresponding PDF location.
 - The Codex App Server requires a valid `~/.codex/config.toml`. Fix the reported configuration line before retrying if a TOML parse error occurs.
+- macOS support is currently beta: path discovery, preflight, and process launch are covered, but real-PDF end-to-end acceptance on both Apple Silicon and Intel Macs is still required before declaring stable support.
 
 ### Development
 

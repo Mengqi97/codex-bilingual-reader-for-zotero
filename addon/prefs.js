@@ -1,6 +1,7 @@
 pref("extensions.zotero.codex-bilingual-reader.backend", "cli");
 pref("extensions.zotero.codex-bilingual-reader.preservedPdfLauncherPath", "");
 pref("extensions.zotero.codex-bilingual-reader.preservedPdfEnginePath", "");
+pref("extensions.zotero.codex-bilingual-reader.preservedPdfPythonPath", "");
 pref("extensions.zotero.codex-bilingual-reader.preservedPdfReasoning", "low");
 pref("extensions.zotero.codex-bilingual-reader.cliPath", "");
 pref("extensions.zotero.codex-bilingual-reader.cliNodePath", "");

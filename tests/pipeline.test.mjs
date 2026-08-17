@@ -216,6 +216,56 @@ test("preferences provide a verified one-click runtime installer", async () => {
   assert.doesNotMatch(runner, /pdf-selectable-support/);
 });
 
+test("macOS runtime support is isolated from the Windows portable workflow", async () => {
+  const main = await (await import("node:fs/promises")).readFile(
+    new URL("../src/main.js", import.meta.url), "utf8",
+  );
+  const pane = await (await import("node:fs/promises")).readFile(
+    new URL("../addon/content/preferences.xhtml", import.meta.url), "utf8",
+  );
+  const prefs = await (await import("node:fs/promises")).readFile(
+    new URL("../addon/content/prefsPane-init.js", import.meta.url), "utf8",
+  );
+  const defaults = await (await import("node:fs/promises")).readFile(
+    new URL("../addon/prefs.js", import.meta.url), "utf8",
+  );
+  const runner = await (await import("node:fs/promises")).readFile(
+    new URL("../scripts/translate-preserved-pdf-cli.mjs", import.meta.url), "utf8",
+  );
+
+  assert.match(main, /Services\.appinfo\.OS === "Darwin"/);
+  assert.match(main, /automaticRuntimeSetup: platform === "windows" \? "download" : platform === "macos" \? "detect" : "manual"/);
+  assert.match(main, /"\/opt\/homebrew\/bin\/" \+ name/);
+  assert.match(main, /"\/usr\/local\/bin\/" \+ name/);
+  assert.match(main, /"\.local", "bin", name/);
+  assert.match(main, /"\.local", "share", "uv", "tools", "pdf2zh-next", "bin", "python"/);
+  assert.match(main, /unixExecutableCandidates\("pdf2zh_next"\)/);
+  assert.match(main, /uv tool install --python 3\.12 pdf2zh-next/);
+  assert.match(main, /const separator = Services\.appinfo\.OS === "WINNT" \? ";" : ":"/);
+  assert.match(main, /const codexPath = await codexExecutablePath\(\)/);
+  assert.match(main, /command,\s+arguments: \["app-server"\]/);
+  assert.doesNotMatch(main, /Codex App Server 当前仅实现 Windows/);
+
+  assert.match(defaults, /preservedPdfPythonPath/);
+  assert.match(pane, /codex-bilingual-preserved-pdf-python/);
+  assert.match(pane, /macOS: ~\/\.local\/bin\/pdf2zh_next/);
+  assert.match(prefs, /自动检测\/配置 macOS PDF 环境/);
+  assert.match(prefs, /result\.platform === "macos"/);
+
+  assert.match(runner, /process\.env\.CODEX_PDF_PYTHON/);
+  assert.match(runner, /process\.platform === "win32" \? portableEngine : ""/);
+  assert.match(runner, /CODEX_PDF_ENGINE is required on macOS/);
+  assert.match(runner, /process\.platform === "win32" && resolve\(engine\)/);
+  assert.match(runner, /const platformProxyDefaults = process\.platform === "win32"/);
+  assert.match(runner, /Configured PDF Python cannot import pymupdf/);
+
+  // Existing Windows installation and launch contracts must remain present.
+  assert.match(main, /install-preserved-pdf-runtime\.ps1/);
+  assert.match(main, /WindowsPowerShell/);
+  assert.match(main, /pdf2zh-next-staging-2\.9\.0-babeldoc-0\.6\.4/);
+  assert.match(runner, /runtime", "pythonw\.exe"/);
+});
+
 test("completed preserved PDFs are automatically imported into the selected Zotero item", async () => {
   const main = await (await import("node:fs/promises")).readFile(
     new URL("../src/main.js", import.meta.url), "utf8",

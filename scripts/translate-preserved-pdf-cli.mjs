@@ -12,16 +12,18 @@ if (!checking && (!source || !requestedOutput)) throw new Error("Usage: node scr
 
 const output = requestedOutput ? resolve(requestedOutput) : "";
 const home = resolve(root, ".runtime", "pdf2zh-home");
-// Use PDFMathTranslate's official portable Windows bundle.  It ships the
-// matching BabelDOC runtime rather than mixing pip-installed dependencies.
+// Windows uses PDFMathTranslate's official portable bundle. macOS uses the
+// official uv-installed `pdf2zh_next` command supplied through CODEX_PDF_ENGINE.
 const portableRoot = resolve(root, ".tools", "pdf2zh-next-staging-2.9.0-babeldoc-0.6.4", "pdf2zh");
 const portableEngine = resolve(portableRoot, "pdf2zh.exe");
-const engine = process.env.CODEX_PDF_ENGINE || portableEngine;
+const engine = process.env.CODEX_PDF_ENGINE || (process.platform === "win32" ? portableEngine : "");
 // CLITranslator parses its command with POSIX shlex even on Windows. Forward
 // slashes plus explicit quotes keep this absolute path intact across that hop.
-// BabelDOC launches this bridge once per source fragment. Use its bundled
-// pythonw.exe so the bridge itself never creates a visible console window.
-const bridgePython = resolve(portableRoot, "runtime", "pythonw.exe").replace(/\\\\/g, "/");
+// BabelDOC launches this bridge once per source fragment. Windows uses the
+// bundled windowless Python; macOS uses the uv environment selected by Zotero.
+const bridgePython = (process.env.CODEX_PDF_PYTHON
+  || (process.platform === "win32" ? resolve(portableRoot, "runtime", "pythonw.exe") : "/usr/bin/python3"))
+  .replace(/\\\\/g, "/");
 const wrapper = resolve(root, "scripts", "codex-cli-translator.py").replace(/\\\\/g, "/");
 const broker = resolve(root, "scripts", "codex-batch-broker.py").replace(/\\\\/g, "/");
 const compactDualPdfScript = resolve(root, "scripts", "compact-dual-pdf.py");
@@ -36,19 +38,25 @@ const cliTimeout = String(Math.min(300, Math.max(1, Number.isFinite(requestedCli
 const qps = process.env.CODEX_PDF_QPS || "64";
 const workers = process.env.CODEX_PDF_WORKERS || "64";
 const recoveryIdleMs = Math.max(60000, Number(process.env.CODEX_PDF_ENGINE_RECOVERY_IDLE_SECONDS || "90") * 1000);
-// Capture the real Windows account before isolating BabelDOC's HOME.  A
+// Capture the real user account before isolating BabelDOC's HOME. A
 // stale inherited CODEX_HOME can otherwise point into the temporary runtime.
 const codexHome = process.env.CODEX_PDF_CODEX_HOME
-  || (process.env.USERPROFILE ? resolve(process.env.USERPROFILE, ".codex") : process.env.CODEX_HOME);
-const env = {
-  ...process.env,
-  USERPROFILE: home, HOME: home,
-  CODEX_HOME: codexHome,
-  CODEX_PDF_CODEX_HOME: codexHome,
-  CODEX_PDF_CODEX: process.env.CODEX_PDF_CODEX || "codex",
+  || process.env.CODEX_HOME
+  || (process.env.USERPROFILE ? resolve(process.env.USERPROFILE, ".codex") : "")
+  || (process.env.HOME ? resolve(process.env.HOME, ".codex") : "");
+const platformProxyDefaults = process.platform === "win32" ? {
   HTTP_PROXY: process.env.HTTP_PROXY || "http://127.0.0.1:7897",
   HTTPS_PROXY: process.env.HTTPS_PROXY || "http://127.0.0.1:7897",
   ALL_PROXY: process.env.ALL_PROXY || "http://127.0.0.1:7897",
+} : {};
+const env = {
+  ...process.env,
+  ...(process.platform === "win32" ? { USERPROFILE: home } : {}),
+  HOME: home,
+  CODEX_HOME: codexHome,
+  CODEX_PDF_CODEX_HOME: codexHome,
+  CODEX_PDF_CODEX: process.env.CODEX_PDF_CODEX || "codex",
+  ...platformProxyDefaults,
   NO_PROXY: "127.0.0.1,localhost",
   PYTHONIOENCODING: "utf-8",
   PYTHONUTF8: "1",
@@ -57,8 +65,23 @@ const env = {
   // BabelDOC's dynamic layout model. Keep it opt-in.
   CODEX_PDF_LAYOUT_PROVIDER: process.env.CODEX_PDF_LAYOUT_PROVIDER || "cpu",
 };
+async function verifyPythonRuntime() {
+  const pythonProbe = "import sys; from pathlib import Path; sys.path.insert(0, str(Path(sys.executable).resolve().parents[1] / 'site-packages')); import pymupdf";
+  const child = spawn(bridgePython, ["-c", pythonProbe], {
+    cwd: root, env, windowsHide: true, stdio: ["ignore", "ignore", "pipe"],
+  });
+  let diagnostics = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => { diagnostics += chunk; });
+  const exitCode = await new Promise((resolvePromise, reject) => {
+    child.on("error", reject);
+    child.on("exit", (code) => resolvePromise(code));
+  });
+  if (exitCode !== 0) throw new Error(`Configured PDF Python cannot import pymupdf: ${diagnostics.slice(-500)}`);
+}
 if (checking) {
   await mkdir(home, { recursive: true });
+  if (!engine) throw new Error("CODEX_PDF_ENGINE is required on macOS");
   await access(engine);
   await access(resolve(root, "scripts", "prepare-pdf2zh-runtime.mjs"));
   await access(bridgePython);
@@ -67,12 +90,15 @@ if (checking) {
   await access(compactDualPdfScript);
   await access(exporter);
   await access(docxBuilder);
+  await verifyPythonRuntime();
   console.log(`RESULT_JSON=${JSON.stringify({ status: "ready", engine, wrapper })}`);
   process.exit(0);
 }
 await mkdir(output, { recursive: true });
 await mkdir(home, { recursive: true });
-if (resolve(engine).toLowerCase() === portableEngine.toLowerCase()) await preparePdf2zhRuntime(portableRoot);
+if (process.platform === "win32" && resolve(engine).toLowerCase() === portableEngine.toLowerCase()) {
+  await preparePdf2zhRuntime(portableRoot);
+}
 const runnerResultPath = resolve(output, "codex-runner-result.json");
 await rm(runnerResultPath, { force: true });
 env.CODEX_PDF_CHECKPOINT_FILE = resolve(output, "codex-fragment-checkpoint.jsonl");

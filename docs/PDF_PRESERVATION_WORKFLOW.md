@@ -105,6 +105,14 @@ OPENAI_MODEL=<已验证的 Codex 模型，例如 gpt-5.4-mini>
 
 本项目中的 `scripts/run-preserved-pdf-smoke.mjs` 可在不接触用户 PDF 的前提下复现验证：它使用仓库内的双栏、公式、矢量图和表格样例，生成双语 PDF；`scripts/verify-preserved-pdf.py` 做结构核验。
 
+### macOS 运行契约（beta）
+
+macOS 不复用 Windows 便携 EXE。插件按照 PDFMathTranslate-next 官方建议检测 uv 安装：`~/.local/bin/pdf2zh_next` 及 `~/.local/share/uv/tools/pdf2zh-next/bin/python`，同时兼容 Apple Silicon Homebrew 的 `/opt/homebrew/bin`、Intel Homebrew 的 `/usr/local/bin` 和 Zotero 设置中的手动绝对路径。
+
+macOS 分支只负责复制本插件自己的 MIT 启动脚本并检测外部依赖，不下载或捆绑 AGPL 引擎。`CODEX_PDF_ENGINE` 和 `CODEX_PDF_PYTHON` 会显式传给平台无关的 Node 启动器；Windows 仍使用原有 `pdf2zh.exe`、`pythonw.exe` 和 PowerShell 安装器。macOS GUI 应用通常拿不到终端完整的 `PATH`，因此不能只依赖命令名，必须解析为已存在的绝对路径。
+
+当前静态检查和 Windows 回归测试已覆盖平台分支隔离。macOS 稳定发布前还必须分别在 Apple Silicon 和 Intel Mac 上完成：环境检测、Codex/API 短连接、真实 PDF 翻译、中文字形、页面宽度后处理、Zotero 自动导入与 Reader 刷新验收。
+
 ### Job 与事件日志
 
 每个 PDF 在 Zotero 附件存储目录中维护一个 JSON job 文件，采用追加阶段而不是“运行中内存状态”：
