@@ -11,6 +11,19 @@
   const PREF_PREFIX = "extensions.zotero.codex-bilingual-reader.";
   const CACHE_FILE = "codex-bilingual-reader.json";
   const TASKS_FILE = "codex-bilingual-reader-tasks.json";
+  const RUNTIME_DIRECTORY = "codex-bilingual-runtime";
+  const RUNTIME_FILES = [
+    "translate-preserved-pdf-cli.mjs",
+    "prepare-pdf2zh-runtime.mjs",
+    "codex-cli-translator.py",
+    "codex-batch-broker.py",
+    "compact-dual-pdf.py",
+    "export-bilingual-artifacts.mjs",
+    "render-pages-to-docx.py",
+    "flatten-pdf-for-viewer.py",
+    "verify-preserved-pdf.py",
+    "install-preserved-pdf-runtime.ps1",
+  ];
   let appServer;
   let registeredPaneID;
   let preferencePaneID;
@@ -254,6 +267,46 @@
     return { root, launcher, engine };
   }
 
+  async function installPreservedPdfRuntime() {
+    if (Services.appinfo.OS !== "WINNT") {
+      throw new Error("一键安装目前支持 Windows；其他系统请使用高级手动配置。");
+    }
+    const runtimeRoot = PathUtils.join(PathUtils.profileDir || PathUtils.tempDir, RUNTIME_DIRECTORY);
+    const scriptsDirectory = PathUtils.join(runtimeRoot, "scripts");
+    await IOUtils.makeDirectory(scriptsDirectory, { createAncestors: true });
+    for (const name of RUNTIME_FILES) {
+      const response = await fetch(`${global.rootURI}content/runtime/${name}`);
+      if (!response.ok) throw new Error(`无法读取插件内置运行脚本 ${name}（HTTP ${response.status}）。`);
+      await IOUtils.write(PathUtils.join(scriptsDirectory, name), new Uint8Array(await response.arrayBuffer()));
+    }
+    const systemRoot = Services.env.get("SystemRoot") || "C:\\Windows";
+    const powershell = PathUtils.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+    if (!(await IOUtils.exists(powershell))) throw new Error(`未找到 Windows PowerShell：${powershell}`);
+    const installer = PathUtils.join(scriptsDirectory, "install-preserved-pdf-runtime.ps1");
+    const process = await Subprocess.call({
+      command: powershell,
+      arguments: ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", installer, "-RuntimeRoot", runtimeRoot],
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const stdoutPromise = readSubprocessStream(process.stdout);
+    const stderrPromise = readSubprocessStream(process.stderr);
+    const exitCode = subprocessExitCode(await process.wait());
+    const [stdout, stderr] = await Promise.all([stdoutPromise, stderrPromise]);
+    if (exitCode !== 0) {
+      const detail = String(stderr || stdout).trim().replace(/\s+/g, " ").slice(-900);
+      throw new Error(`运行环境安装失败（退出码 ${exitCode}）${detail ? `：${detail}` : "。"}`);
+    }
+    const match = String(stdout).match(/INSTALL_JSON=(\{[^\r\n]+\})/g);
+    if (!match?.length) throw new Error("安装器未返回 INSTALL_JSON，请检查磁盘空间和网络连接。");
+    const result = JSON.parse(match.at(-1).slice("INSTALL_JSON=".length));
+    setPref("preservedPdfLauncherPath", result.launcher);
+    setPref("preservedPdfEnginePath", result.engine);
+    setPref("cliNodePath", result.node);
+    await runPreservedPdfLauncher(["--check"], await preservedPdfEnvironment());
+    return result;
+  }
+
   async function firstExistingPath(candidates) {
     for (const candidate of candidates) {
       if (candidate && await IOUtils.exists(candidate)) return candidate;
@@ -350,7 +403,7 @@
 
   async function runPreservedPdfLauncher(arguments_, environment, onProcess) {
     const launcher = preservedPdfLauncherPath();
-    if (!launcher) throw new Error("请先在插件设置中填写“保真 PDF 启动器路径”。");
+    if (!launcher) throw new Error("PDF 翻译环境尚未配置。请打开插件设置，点击“一键安装/修复 PDF 翻译环境”。");
     if (!(await IOUtils.exists(launcher))) throw new Error(`未找到保真 PDF 启动器：${launcher}`);
     const node = await nodeExecutablePath();
     if (!node) throw new Error("未找到 node.exe。请在插件设置中填写 Node 路径。");
@@ -1846,6 +1899,7 @@
     fetchOfficialPrice,
     fetchAppServerModels,
     preservedPdfModelSource,
+    installPreservedPdfRuntime,
     selectPreservedPdfWorkspace,
     adjustBilingualPdfWidth,
     startPreservedPdfTranslation,

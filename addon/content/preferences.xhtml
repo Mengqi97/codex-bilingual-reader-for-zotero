@@ -91,6 +91,10 @@
   <groupbox id="codex-bilingual-preserved-pdf-settings">
     <label><html:h2>保真 PDF 引擎（默认输出）</html:h2></label>
     <description>插件调用本机外部安装的 PDFMathTranslate-next 启动器，避免将 AGPL 引擎打包进本插件。翻译后端跟随上方“调用方式”：可使用本机 Codex CLI，或 OpenAI、DeepSeek 等兼容 API。</description>
+    <hbox align="center" style="gap:8px; flex-wrap:wrap;">
+      <button id="codex-bilingual-install-runtime" label="一键安装/修复 PDF 翻译环境（约 600 MB）" />
+      <description id="codex-bilingual-runtime-install-status">首次安装需下载并解压官方引擎，通常需要几分钟。</description>
+    </hbox>
     <hbox align="center" style="gap:8px;">
       <label value="启动器路径" flex="1" />
       <html:input id="codex-bilingual-preserved-pdf-launcher" type="text" style="width:360px;" placeholder="…\scripts\translate-preserved-pdf-cli.mjs" />
@@ -101,7 +105,7 @@
     </hbox>
     <hbox align="center" style="gap:8px;">
       <spacer flex="1" />
-      <button id="codex-bilingual-select-pdf-workspace" label="选择工作目录并自动配置…" />
+      <button id="codex-bilingual-select-pdf-workspace" label="高级：选择已有工作目录…" />
       <description id="codex-bilingual-pdf-workspace-status" />
     </hbox>
     <hbox align="center" style="gap:8px;">

@@ -14,6 +14,8 @@
 
 <p align="center"><a href="#中文">简体中文</a> · <a href="#english">English</a></p>
 
+![Codex Bilingual Reader GitHub preview](docs/assets/github-social-preview.png)
+
 ## 中文
 
 Codex Bilingual Reader 是一个适用于 Zotero 8/9 的 MIT 开源插件。它可通过本地已登录的 Codex CLI，或 OpenAI、DeepSeek 等 OpenAI 兼容 API，将 PDF 附件转换为**保留原排版的中英对照 PDF**。生成结果会作为独立的 Zotero 子附件自动导入，原始 PDF 始终不会被修改。
@@ -37,14 +39,14 @@ Codex Bilingual Reader 是一个适用于 Zotero 8/9 的 MIT 开源插件。它�
 
 1. 从[最新 GitHub Release](https://github.com/Mengqi97/codex-bilingual-reader-for-zotero/releases/latest)下载 `codex-bilingual-reader.xpi`。
 2. 在 Zotero 中打开**工具 → 附加组件**，选择**从文件安装附加组件…**，然后选择下载的 XPI。
-3. 克隆或下载本仓库，并单独安装 PDFMathTranslate-next。打开**工具 → Codex 中英对照设置…**，选择本仓库根目录。由于许可证边界，MIT 许可证的 XPI 不会捆绑 AGPL 翻译引擎。
+3. 打开**工具 → Codex 中英对照设置…**，点击**一键安装/修复 PDF 翻译环境**。首次运行会从官方 Release 下载并解压约 600 MB 的 PDFMathTranslate-next/BabelDOC 独立引擎，通常需要几分钟。
 4. 选择本地 Codex CLI 或 OpenAI 兼容 API，配置模型和凭据，并在翻译前点击**测试连接**。
 
 ### 保排版 PDF 配置
 
-首次翻译前，打开**工具 → Codex 中英对照设置…**，点击**选择工作目录并自动配置…**，然后选择本仓库根目录。插件会自动填写启动器和 PDFMathTranslate 路径并执行本地预检，也支持手动配置自定义路径。
+一键安装完成后，插件会自动填写启动器、PDFMathTranslate 和 Node 路径并执行本地预检；普通用户无需克隆本仓库。已有开发环境或自定义安装位置的用户仍可使用**高级：选择已有工作目录…**或手动填写路径。
 
-启动器还需要 Python 3、`pdftoppm` 和 `pdftotext`，当前 Windows 安装会被自动检测。PDFMathTranslate-next/BabelDOC 使用 AGPL 许可证，因此它作为独立外部引擎运行，MIT 插件不会复制、捆绑或链接其代码。关于调用协议、隐私边界、许可证边界和验收标准，请参阅[保排版 PDF 工作流](docs/PDF_PRESERVATION_WORKFLOW.md)。
+一键安装目前支持 Windows，并对官方下载包执行 SHA-256 校验；若系统没有 Node.js，会一并安装官方便携版本。PDFMathTranslate-next/BabelDOC 使用 AGPL 许可证，因此它由用户主动下载并作为独立外部引擎运行，MIT 插件不会捆绑或链接其代码。关于调用协议、隐私边界、许可证边界和验收标准，请参阅[保排版 PDF 工作流](docs/PDF_PRESERVATION_WORKFLOW.md)。
 
 ### 使用入口与设置
 
@@ -59,6 +61,10 @@ Codex Bilingual Reader 是一个适用于 Zotero 8/9 的 MIT 开源插件。它�
 - **保排版 PDF（默认）**：Codex CLI 使用本地登录和所选推理强度；API 模式支持 OpenAI、DeepSeek 等 Chat Completions 兼容服务。
 - **默认打开附件**：可选择双击论文时优先打开双语 PDF，或保持 Zotero 默认打开原始 PDF 的行为。
 - **测试连接**：验证保排版启动器，并通过所选后端翻译一个最小测试句，不会发送论文正文。
+
+### 典型处理时间
+
+翻译速度取决于 PDF 排版复杂度、网络延迟、模型服务和并发限制。以 DeepSeek API 为例，普通 8 页学术 PDF 通常约需 10 分钟。公式、表格、双栏排版较多或服务繁忙时可能更久；该数值是经验参考，不是性能保证。
 
 ### 安全与隐私
 
@@ -86,6 +92,18 @@ npm run build
 
 构建产物位于 `build/codex-bilingual-reader.xpi`。
 
+### 致谢与参考项目
+
+本项目在插件架构、交互设计、PDF 保排版流程和兼容接口方面参考或使用了以下优秀开源项目：
+
+- [PDFMathTranslate-next](https://github.com/PDFMathTranslate-next/PDFMathTranslate-next)
+- [BabelDOC](https://github.com/funstory-ai/BabelDOC)
+- [llm-for-zotero](https://github.com/yilewang/llm-for-zotero)
+- [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template)
+- [Translate for Zotero / zotero-pdf-translate](https://github.com/windingwind/zotero-pdf-translate)
+
+感谢这些项目及其贡献者。PDFMathTranslate-next/BabelDOC 作为独立外部 AGPL 引擎运行；所有相关项目仍分别遵循各自的许可证。
+
 ---
 
 ## English
@@ -111,14 +129,14 @@ English is preserved on the left and the translated, selectable Chinese page is 
 
 1. Download `codex-bilingual-reader.xpi` from the [latest GitHub Release](https://github.com/Mengqi97/codex-bilingual-reader-for-zotero/releases/latest).
 2. In Zotero, open **Tools → Add-ons**, choose **Install Add-on From File…**, and select the downloaded XPI.
-3. Clone or download this repository and install PDFMathTranslate-next separately. Open **Tools → Codex 中英对照设置…** and select the repository root. The external AGPL engine is intentionally not bundled in the MIT-licensed XPI.
+3. Open **Tools → Codex 中英对照设置…** and click **一键安装/修复 PDF 翻译环境**. On first use, the plugin downloads and extracts the separate PDFMathTranslate-next/BabelDOC engine (about 600 MB) from its official release; this normally takes a few minutes.
 4. Select the locally authenticated Codex CLI or an OpenAI-compatible API, configure the model and credentials, and run **Test connection** before translating a paper.
 
 ### Preserved-layout PDF setup
 
-Before the first translation, open **Tools → Codex 中英对照设置…**, click **选择工作目录并自动配置…**, and select this repository's root folder. The plugin fills the launcher and PDFMathTranslate paths and runs a local preflight. Manual path entry remains available for custom layouts.
+After one-click setup, the plugin fills the launcher, PDFMathTranslate, and Node paths and runs a local preflight. Regular users no longer need to clone this repository. Existing development environments and custom installations can still use **高级：选择已有工作目录…** or enter paths manually.
 
-The launcher also requires Python 3, `pdftoppm`, and `pdftotext`; the current Windows installation is discovered automatically. PDFMathTranslate-next/BabelDOC runs as a separate external engine because it is AGPL-licensed. The MIT plugin does not copy, bundle, or link that engine. See [the preserved PDF workflow](docs/PDF_PRESERVATION_WORKFLOW.md) for provider contracts, privacy boundaries, license boundaries, and acceptance gates.
+One-click setup currently supports Windows and verifies official downloads with SHA-256. If Node.js is unavailable, the official portable executable is installed as well. PDFMathTranslate-next/BabelDOC is downloaded on explicit user action and runs as a separate external AGPL engine; it is not bundled or linked into the MIT plugin. See [the preserved PDF workflow](docs/PDF_PRESERVATION_WORKFLOW.md) for provider contracts, privacy boundaries, license boundaries, and acceptance gates.
 
 ### Entry points and settings
 
@@ -133,6 +151,10 @@ Open settings through **Edit → Settings → Codex 中英对照**, **Tools → 
 - **Preserved PDF (default)** — Codex CLI uses the local login and selected reasoning level; API mode supports OpenAI, DeepSeek, and other Chat Completions-compatible providers.
 - **Default open attachment** — chooses whether double-clicking a paper prefers its bilingual PDF or retains Zotero's original-PDF behavior.
 - **Test connection** — validates the preserved-PDF launcher and translates one minimal test sentence through the selected backend without sending a document.
+
+### Typical processing time
+
+Translation time depends on PDF layout complexity, network latency, model availability, and provider rate limits. As a practical reference, an ordinary eight-page academic PDF typically takes about ten minutes with the DeepSeek API. Formula-heavy, table-heavy, multi-column documents or provider congestion may take longer; this is an observed estimate, not a performance guarantee.
 
 ### Security and privacy
 
@@ -159,3 +181,15 @@ npm run build
 ```
 
 The distributable is `build/codex-bilingual-reader.xpi`.
+
+### Acknowledgements and references
+
+This project references or builds on the ideas, plugin interactions, preserved-layout workflow, and compatible interfaces of these excellent open-source projects:
+
+- [PDFMathTranslate-next](https://github.com/PDFMathTranslate-next/PDFMathTranslate-next)
+- [BabelDOC](https://github.com/funstory-ai/BabelDOC)
+- [llm-for-zotero](https://github.com/yilewang/llm-for-zotero)
+- [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template)
+- [Translate for Zotero / zotero-pdf-translate](https://github.com/windingwind/zotero-pdf-translate)
+
+Many thanks to their maintainers and contributors. PDFMathTranslate-next/BabelDOC remains a separately installed external AGPL engine, and every referenced project continues to be governed by its own license.

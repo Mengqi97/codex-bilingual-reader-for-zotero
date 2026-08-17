@@ -178,6 +178,26 @@
     document.getElementById("codex-bilingual-app-server-reasoning")?.addEventListener("command", () => {
       set("appServerReasoningEffort", document.getElementById("codex-bilingual-app-server-reasoning").value);
     });
+    document.getElementById("codex-bilingual-install-runtime")?.addEventListener("command", async () => {
+      const button = document.getElementById("codex-bilingual-install-runtime");
+      const status = document.getElementById("codex-bilingual-runtime-install-status");
+      button.disabled = true;
+      status.textContent = "正在下载并安装官方 PDF 引擎（约 600 MB），请保持 Zotero 运行…";
+      status.style.color = "var(--fill-secondary, #666)";
+      try {
+        const result = await Zotero.CodexBilingual.installPreservedPdfRuntime();
+        document.getElementById("codex-bilingual-preserved-pdf-launcher").value = result.launcher;
+        document.getElementById("codex-bilingual-preserved-pdf-engine").value = result.engine;
+        document.getElementById("codex-bilingual-node-path").value = result.node;
+        status.textContent = "安装完成，路径已填写并通过本地预检。";
+        status.style.color = "var(--color-green-50, #238636)";
+      } catch (error) {
+        status.textContent = `安装失败：${error.message || String(error)}`;
+        status.style.color = "var(--color-red-60, #c01c28)";
+      } finally {
+        button.disabled = false;
+      }
+    });
     document.getElementById("codex-bilingual-select-pdf-workspace")?.addEventListener("command", async () => {
       const button = document.getElementById("codex-bilingual-select-pdf-workspace");
       const status = document.getElementById("codex-bilingual-pdf-workspace-status");

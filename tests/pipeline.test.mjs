@@ -186,6 +186,36 @@ test("preferences provide one-click workspace configuration for the PDF runner",
   assert.match(prefs, /已自动配置并完成保真 PDF 预检/);
 });
 
+test("preferences provide a verified one-click runtime installer", async () => {
+  const main = await (await import("node:fs/promises")).readFile(
+    new URL("../src/main.js", import.meta.url), "utf8",
+  );
+  const pane = await (await import("node:fs/promises")).readFile(
+    new URL("../addon/content/preferences.xhtml", import.meta.url), "utf8",
+  );
+  const bridge = await (await import("node:fs/promises")).readFile(
+    new URL("../addon/content/prefsPane-init.js", import.meta.url), "utf8",
+  );
+  const installer = await (await import("node:fs/promises")).readFile(
+    new URL("../scripts/install-preserved-pdf-runtime.ps1", import.meta.url), "utf8",
+  );
+  const runner = await (await import("node:fs/promises")).readFile(
+    new URL("../scripts/translate-preserved-pdf-cli.mjs", import.meta.url), "utf8",
+  );
+  assert.match(pane, /codex-bilingual-install-runtime/);
+  assert.match(pane, /一键安装\/修复 PDF 翻译环境（约 600 MB）/);
+  assert.match(bridge, /installPreservedPdfRuntime\(\)/);
+  assert.match(main, /async function installPreservedPdfRuntime\(\)/);
+  assert.match(main, /content\/runtime\/\$\{name\}/);
+  assert.match(main, /installPreservedPdfRuntime,/);
+  assert.match(installer, /PDFMathTranslate-next\/PDFMathTranslate-next\/releases\/download\/v2\.9\.0/);
+  assert.match(installer, /6916a2f299b029cfb75803c780528088d93e7694d5597c4250ba2dcf5598f1d8/);
+  assert.match(installer, /nodejs\.org\/dist\/v24\.19\.0\/win-x64\/node\.exe/);
+  assert.match(installer, /3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237/);
+  assert.match(installer, /INSTALL_JSON=/);
+  assert.doesNotMatch(runner, /pdf-selectable-support/);
+});
+
 test("completed preserved PDFs are automatically imported into the selected Zotero item", async () => {
   const main = await (await import("node:fs/promises")).readFile(
     new URL("../src/main.js", import.meta.url), "utf8",

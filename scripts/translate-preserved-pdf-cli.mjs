@@ -16,9 +16,6 @@ const home = resolve(root, ".runtime", "pdf2zh-home");
 // matching BabelDOC runtime rather than mixing pip-installed dependencies.
 const portableRoot = resolve(root, ".tools", "pdf2zh-next-staging-2.9.0-babeldoc-0.6.4", "pdf2zh");
 const portableEngine = resolve(portableRoot, "pdf2zh.exe");
-// The portable bundle's interpreter is private to its launcher. Keep a small
-// local virtual environment for optional companion-document conversion.
-const supportPython = resolve(root, ".tools", "pdf-selectable-support", "Scripts", "python.exe");
 const engine = process.env.CODEX_PDF_ENGINE || portableEngine;
 // CLITranslator parses its command with POSIX shlex even on Windows. Forward
 // slashes plus explicit quotes keep this absolute path intact across that hop.
@@ -64,7 +61,6 @@ if (checking) {
   await mkdir(home, { recursive: true });
   await access(engine);
   await access(resolve(root, "scripts", "prepare-pdf2zh-runtime.mjs"));
-  await access(supportPython);
   await access(bridgePython);
   await access(wrapper);
   await access(broker);
